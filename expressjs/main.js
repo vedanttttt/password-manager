@@ -67,3 +67,22 @@ app.get('/flights/:From?.:To?',(req,res)=>{ // (.) ki jagah (-) bhi laga sakte h
   res.send('Search for flights from ' + req.params.From + ' to ' + req.params.To);
 });
 
+
+//regex in routes = can be used for security purposes
+
+// ab?cd = this will work either for acd or abcd
+// ab+cd = b should come 1 and more time
+//ab*cd = ab or cd ke beech me kuch bhi kitna bhi daal do , koi number bhi chalega
+app.get('/ab*cd',(req,res)=>{  // or you can write as ab(*)cd
+  console.log(req.params);
+  res.send("Hey this is regex i think");
+});
+
+// fly last 3 word hoga , uske pehle kuch bhi ho , fly ke age $ laga he iska matlab fly ke age kuch nhi
+// inverted comma me nahi hoga or age peeche slash hoga
+app.get(/.*fly$/,(req,res)=>{
+  //console.log(req.params);
+  res.send("Hey this is regex i think");
+});
+
+
