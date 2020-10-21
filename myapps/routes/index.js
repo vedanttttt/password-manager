@@ -1,10 +1,56 @@
 var express = require('express');
+var multer = require('multer');
+var path = require('path');//for giving path while file upload along with multer
 var router = express.Router();
 var employeeModel = require('../modules/employee');
-
+var uploadModel = require('../modules/upload');
 var employee = employeeModel.find({});
+var imageData = uploadModel.find({});
+
+router.use(express.static(__dirname + './public'));
+
+//function to go in multer and get destiantion and file name
+var Storage = multer.diskStorage({
+  destination: "./public/uploads/",
+  filename: (req,file,cb)=>{
+    cb(null,file.fieldname + '_'+Date.now() + path.extname(file.originalname))
+  }
+});
+
+//middleware
+var upload = multer({
+  storage: Storage
+}).single('file');
 
 /* GET home page. */
+
+//for upload , get and post
+
+router.post('/upload',upload /*this upload is of middleware upload,u can also use another name*/,function(req, res, next) {
+  var imageFile = req.file.filename;
+  var success = req.file.filename + " Uploaded successfully";
+
+  var imageDetails = new uploadModel({
+    imagename : imageFile
+  })
+  //for saving file in database
+  imageDetails.save(function(err,doc){
+    if(err) throw err;
+
+    imageData.exec(function(err,data){
+      if(err) throw err;
+      res.render('upload-file', { title: 'Upload File',records: data,success: success });
+    });
+  });
+});
+
+router.get('/upload', function(req, res, next) {
+    imageData.exec(function(err,data){
+      if(err) throw err;
+      res.render('upload-file', { title: 'Upload File',records: data,success: '' });
+    });
+  });
+
 router.get('/', function(req, res, next) {
   employee.exec(function(err,data){
     if(err) throw err;
