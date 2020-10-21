@@ -1,13 +1,22 @@
 var express = require('express');
 var multer = require('multer');
 var path = require('path');//for giving path while file upload along with multer
+//using jwt for authentication
+var jwt = require('jsonwebtoken');
 var router = express.Router();
 var employeeModel = require('../modules/employee');
 var uploadModel = require('../modules/upload');
+const { LocalStorage } = require('node-localstorage');
 var employee = employeeModel.find({});
 var imageData = uploadModel.find({});
 
 router.use(express.static(__dirname + './public'));
+
+//requiring node-localstorage
+if(typeof localStorage === 'undefined' || localStorage === null){
+  var localStorage = require('node-localstorage').LocalStorage;
+  localStorage = new LocalStorage('./scratch');
+}
 
 //function to go in multer and get destiantion and file name
 var Storage = multer.diskStorage({
@@ -44,6 +53,17 @@ router.post('/upload',upload /*this upload is of middleware upload,u can also us
   });
 });
 
+  function checkLogin(req,res,next){
+    var myToken = localStorage.getItem('myToken');
+    try{
+      jwt.verify(mytoken, 'loginToken');
+    }
+    catch(err){
+      res.send('You need to login first');
+    }
+    next();
+  }
+
 router.get('/upload', function(req, res, next) {
     imageData.exec(function(err,data){
       if(err) throw err;
@@ -51,11 +71,23 @@ router.get('/upload', function(req, res, next) {
     });
   });
 
-router.get('/', function(req, res, next) {
+router.get('/',checkLogin, function(req, res, next) {
   employee.exec(function(err,data){
     if(err) throw err;
     res.render('index', { title: 'Employee Records', records: data,success: '' });
   });
+});
+
+router.get('/login', function(req, res, next) {
+  var token = jwt.sign({foo: 'bar'}, 'loginToken');
+  localStorage.setItem('myToken',token);
+  res.send('Login Successfull');
+});
+
+router.get('/logout', function(req, res, next) {
+  
+  localStorage.removeItem('myToken');
+  res.send('Logout Successfull');
 });
 
 router.post("/",function(req,res,next){
